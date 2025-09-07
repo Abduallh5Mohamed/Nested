@@ -21,6 +21,7 @@ function ArticlePageContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchArticle = async (slugStr: string) => {
       let found = false;
       if (typeof window !== 'undefined') {
@@ -32,39 +33,27 @@ function ArticlePageContent() {
           }
         } catch (error) {
           setError('تعذر جلب المقال من التخزين المحلي');
-          console.error('Could not retrieve article from session storage', error);
         }
       }
       if (!found) {
         try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAYUegFJOJwTYMxZMTzYs6fBX2JzMgoH0g`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: `Generate a tech insight article with slug: ${slugStr}. Return JSON with title, slug, description, content, author, date, imageTopic.` }]
-              }]
-            })
-          });
-          const data = await res.json();
-          let articleJson = null;
-          if (data && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-            try {
-              articleJson = JSON.parse(data.candidates[0].content.parts[0].text);
-              setArticle(articleJson);
-              if (typeof window !== 'undefined') {
-                window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(articleJson));
-              }
-            } catch (e) {
-              setError('المقال المسترجع من Gemini غير صالح أو غير قابل للعرض');
-              console.error('Failed to parse Gemini API response', e);
-            }
+          const res = await fetch(`/api/articles/${slugStr}`, { signal: controller.signal });
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            setError(errJson.error || 'خطأ في جلب المقال');
           } else {
-            setError('لم يتم العثور على مقال مناسب من Gemini API');
+            const data = await res.json();
+            if (data?.article) {
+              setArticle(data.article);
+              if (typeof window !== 'undefined') {
+                window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(data.article));
+              }
+            } else {
+              setError('استجابة غير متوقعة من الخادم');
+            }
           }
-        } catch (error) {
-          setError('تعذر الاتصال بخدمة Gemini API');
-          console.error('Failed to fetch article from Gemini API', error);
+        } catch (error: any) {
+          if (error.name !== 'AbortError') setError('تعذر الاتصال بالخادم');
         }
       }
       setLoading(false);
@@ -76,6 +65,7 @@ function ArticlePageContent() {
     } else {
       setLoading(false);
     }
+    return () => controller.abort();
   }, [params.slug]);
 
   if (loading) {
