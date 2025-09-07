@@ -20,17 +20,56 @@ function ArticlePageContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchArticle = async (slugStr: string) => {
+      // Try sessionStorage first
+      let found = false;
+      if (typeof window !== 'undefined') {
+        try {
+          const storedArticle = window.sessionStorage.getItem(`article-${slugStr}`);
+          if (storedArticle) {
+            setArticle(JSON.parse(storedArticle));
+            found = true;
+          }
+        } catch (error) {
+          console.error('Could not retrieve article from session storage', error);
+        }
+      }
+      // If not found, fetch from Gemini API
+      if (!found) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAYUegFJOJwTYMxZMTzYs6fBX2JzMgoH0g`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: `Generate a tech insight article with slug: ${slugStr}. Return JSON with title, slug, description, content, author, date, imageTopic.` }]
+              }]
+            })
+          });
+          const data = await res.json();
+          // Gemini returns content in a nested structure, extract JSON from text
+          let articleJson = null;
+          if (data && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            try {
+              articleJson = JSON.parse(data.candidates[0].content.parts[0].text);
+              setArticle(articleJson);
+              if (typeof window !== 'undefined') {
+                window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(articleJson));
+              }
+            } catch (e) {
+              console.error('Failed to parse Gemini API response', e);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch article from Gemini API', error);
+        }
+      }
+      setLoading(false);
+    };
     const slug = params.slug;
     if (slug) {
       const slugStr = Array.isArray(slug) ? slug[0] : slug;
-      try {
-        const storedArticle = sessionStorage.getItem(`article-${slugStr}`);
-        if (storedArticle) setArticle(JSON.parse(storedArticle));
-      } catch (error) {
-        console.error('Could not retrieve article from session storage', error);
-      } finally {
-        setLoading(false);
-      }
+      fetchArticle(slugStr);
     } else {
       setLoading(false);
     }
