@@ -58,7 +58,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   html {
     @apply dark;
@@ -67,7 +67,6 @@
   body {
     @apply bg-background text-foreground font-body;
   }
-  
 }
 
 @layer utilities {
