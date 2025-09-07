@@ -137,14 +137,21 @@ At Nested, we focus on delivering cutting-edge solutions that meet these modern 
           <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">{title}</h1>
           <div className="flex items-center gap-4 text-gray-600">
             <div className="flex items-center gap-2">
-              <Avatar className="w-8 h-8">
-                <AvatarFallback>
-                  <Bot size={16} />
+              <Avatar className="w-10 h-10">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
+                  {author === 'Abduallh' ? 'AB' : author === 'Baraa' ? 'BR' : author === 'Nested Team' ? 'NT' : 'AI'}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-medium">{author}</span>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-800">{author}</span>
+                <span className="text-xs text-gray-500">
+                  {author === 'Abduallh' ? 'Full-Stack Developer' : 
+                   author === 'Baraa' ? 'UI/UX Designer' : 
+                   author === 'Nested Team' ? 'Development Team' : 'AI Assistant'}
+                </span>
+              </div>
             </div>
-            <span className="text-gray-400">|</span>
+            <span className="text-gray-400">•</span>
             <div className="flex items-center gap-2">
               <Calendar size={16} />
               <span>{date}</span>
@@ -161,9 +168,9 @@ At Nested, we focus on delivering cutting-edge solutions that meet these modern 
 
 export default function ArticlePage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-[hsl(var(--off-white-background))]">
       <Header videoEnded={true} />
-      <main className="flex-1 pt-20">
+      <main className="flex-1 pt-20 bg-[hsl(var(--off-white-background))] text-[hsl(var(--dark-text))]">
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-24">
           <ArticlePageContent />
         </div>
