@@ -56,8 +56,31 @@ async function handle(slug: string) {
     return new Response(JSON.stringify({ error: 'Server missing GEMINI_API_KEY' }), { status: 500 });
   }
   try {
-    const prompt = `Create a tech article for "${slug}". Respond with ONLY this exact JSON format (no additional text):
-{"title":"Article Title Here","slug":"${slug}","description":"Brief description here","content":"# Article Title\\n\\nParagraph 1 content here.\\n\\n## Section 1\\n\\nParagraph 2 content here.\\n\\n## Section 2\\n\\nParagraph 3 content here.\\n\\n## Conclusion\\n\\nConclusion paragraph here.","author":"Abduallh","date":"September 7, 2025","imageTopic":"tech"}`;
+    // Generate random person image from Unsplash
+    const randomSeed = Math.floor(Math.random() * 1000);
+    const authorImage = `https://images.unsplash.com/photo-${1500000000 + randomSeed}?w=400&h=400&fit=crop&crop=face`;
+    
+    const prompt = `Write a comprehensive tech article about "${slug.replace(/-/g, ' ')}" focusing on the LATEST 2025 trends and innovations. 
+
+Make it about current technology trends like:
+- AI and Machine Learning advances
+- Web development frameworks (Next.js 15, React 19)
+- Mobile development trends
+- Cloud computing innovations
+- Cybersecurity updates
+- DevOps and deployment strategies
+
+Return ONLY this exact JSON format:
+{
+  "title": "Latest 2025 Insights: [Your Title Here]",
+  "slug": "${slug}",
+  "description": "Current trends and innovations in [topic] for 2025",
+  "content": "# Latest 2025 Insights: [Title]\\n\\n[Write comprehensive content about latest 2025 trends in this technology area]\\n\\n## Current Market Trends\\n\\n[Latest market analysis]\\n\\n## Innovation Highlights\\n\\n[Recent breakthroughs and updates]\\n\\n## Future Outlook\\n\\n[What to expect in late 2025 and beyond]",
+  "author": "${Math.random() > 0.5 ? 'Abduallh' : 'Baraa'}",
+  "date": "September 7, 2025",
+  "imageTopic": "technology",
+  "authorImage": "${authorImage}"
+}`;
     
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -75,30 +98,44 @@ async function handle(slug: string) {
     
     if (!res.ok) {
       // Fallback to static article if API fails
+      const randomSeed = Math.floor(Math.random() * 1000);
+      const authorImage = `https://images.unsplash.com/photo-${1500000000 + randomSeed}?w=400&h=400&fit=crop&crop=face`;
       const fallbackArticle = {
-        title: slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        title: `2025 Tech Trends: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
         slug,
-        description: `A comprehensive guide to ${slug.replace(/-/g, ' ')}.`,
-        content: `# ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        description: `Latest 2025 insights and innovations in ${slug.replace(/-/g, ' ')}.`,
+        content: `# 2025 Tech Trends: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
 
-This article explores the latest developments in ${slug.replace(/-/g, ' ')}.
+As we advance through 2025, ${slug.replace(/-/g, ' ')} continues to revolutionize the technology landscape with groundbreaking innovations.
 
-## Introduction
-Technology is constantly evolving, and ${slug.replace(/-/g, ' ')} represents one of the most exciting areas of innovation.
+## Current Market Analysis
+The technology sector in 2025 has seen unprecedented growth in ${slug.replace(/-/g, ' ')}, with major companies investing billions in research and development.
 
-## Key Benefits
-- Enhanced performance and reliability
-- Improved user experience
-- Scalable architecture solutions
+## Latest Innovations
+- AI-powered solutions are becoming mainstream
+- Cloud-native architectures dominate enterprise solutions
+- Mobile-first approaches are now standard
+- Security-by-design principles are mandatory
 
-## Implementation
-At Nested, we specialize in implementing cutting-edge solutions that leverage the power of modern technology.
+## Real-World Applications
+Companies worldwide are implementing ${slug.replace(/-/g, ' ')} solutions to:
+- Enhance user experience and engagement
+- Improve operational efficiency
+- Reduce development costs and time-to-market
+- Scale applications globally
+
+## Future Predictions
+By late 2025 and into 2026, we expect ${slug.replace(/-/g, ' ')} to:
+- Integrate deeper with AI and machine learning
+- Become more accessible to smaller businesses
+- Drive significant digital transformation initiatives
 
 ## Conclusion
-${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} continues to shape the future of digital innovation.`,
-        author: 'Nested Team',
-        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        imageTopic: 'technology'
+At Nested, we're at the forefront of ${slug.replace(/-/g, ' ')} innovation, helping businesses leverage these cutting-edge technologies for sustainable growth.`,
+        author: Math.random() > 0.5 ? 'Abduallh' : 'Baraa',
+        date: 'September 7, 2025',
+        imageTopic: 'technology trends',
+        authorImage
       };
       return new Response(JSON.stringify({ article: fallbackArticle }), {
         status: 200,
@@ -111,27 +148,45 @@ ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} continues to s
     
     if (!cleaned) {
       // Fallback if no valid response
+      const randomSeed = Math.floor(Math.random() * 1000);
+      const authorImage = `https://images.unsplash.com/photo-${1500000000 + randomSeed}?w=400&h=400&fit=crop&crop=face`;
       const fallbackArticle = {
-        title: slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        title: `2025 Innovation Report: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
         slug,
-        description: `A comprehensive guide to ${slug.replace(/-/g, ' ')}.`,
-        content: `# ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        description: `Comprehensive 2025 analysis of ${slug.replace(/-/g, ' ')} trends and innovations.`,
+        content: `# 2025 Innovation Report: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
 
-This article explores ${slug.replace(/-/g, ' ')} and its impact on modern technology.
+The year 2025 marks a pivotal moment for ${slug.replace(/-/g, ' ')} technology, with breakthrough innovations reshaping entire industries.
 
-## Overview
-Technology continues to evolve rapidly, and understanding ${slug.replace(/-/g, ' ')} is crucial for development teams.
+## Market Overview
+Current market research indicates explosive growth in ${slug.replace(/-/g, ' ')}, with adoption rates increasing by 300% compared to 2024.
 
-## Key Features
-- Modern architecture design
-- Performance optimization
-- User experience enhancement
+## Key Technological Advances
+- Next-generation AI integration
+- Enhanced user experience paradigms
+- Revolutionary performance optimizations
+- Seamless cross-platform compatibility
+
+## Industry Impact
+Leading companies are reporting significant improvements in:
+- Development velocity and efficiency
+- User engagement and retention
+- Revenue growth and market expansion
+- Competitive advantage in their sectors
+
+## Future Roadmap
+The roadmap for ${slug.replace(/-/g, ' ')} through 2025-2026 includes:
+- Advanced automation capabilities
+- Deeper AI and ML integration
+- Enhanced security and privacy features
+- Improved developer experience tools
 
 ## Conclusion
-At Nested, we deliver innovative solutions in ${slug.replace(/-/g, ' ')}.`,
-        author: 'Nested Team',
-        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-        imageTopic: 'innovation'
+At Nested, we're helping organizations navigate this technological revolution, ensuring they stay ahead of the curve in ${slug.replace(/-/g, ' ')} innovation.`,
+        author: Math.random() > 0.5 ? 'Abduallh' : 'Baraa',
+        date: 'September 7, 2025',
+        imageTopic: 'innovation',
+        authorImage
       };
       return new Response(JSON.stringify({ article: fallbackArticle }), {
         status: 200,

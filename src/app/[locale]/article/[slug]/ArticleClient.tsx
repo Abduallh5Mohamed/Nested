@@ -21,24 +21,39 @@ function ArticlePageContent() {
     let isMounted = true;
     
     const createFallbackArticle = (slug: string): InsightArticle => ({
-      title: `${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} - Tech Insight`,
+      title: `2025 Tech Analysis: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}`,
       slug,
-      description: `An AI-generated insight about ${slug.replace(/-/g, ' ')}.`,
-      content: `# ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+      description: `Latest 2025 insights about ${slug.replace(/-/g, ' ')}.`,
+      content: `# 2025 Tech Analysis: ${slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
 
-This is a comprehensive guide about ${slug.replace(/-/g, ' ')}.
+Welcome to our comprehensive 2025 analysis of ${slug.replace(/-/g, ' ')}.
 
-## Overview
-Technology continues to evolve rapidly, and staying updated with the latest trends is crucial for any development team.
+## Current State of Technology
+The technology landscape in 2025 continues to evolve at an unprecedented pace, with ${slug.replace(/-/g, ' ')} at the forefront of innovation.
 
-## Key Points
-- Modern web development requires robust architecture
-- Mobile-first design is essential in today's landscape
-- Performance optimization directly impacts user experience
+## Key Trends and Innovations
+- AI-powered development tools are revolutionizing workflows
+- Cloud-native solutions are becoming the standard
+- User experience design is more crucial than ever
+- Security-first approaches are mandatory for modern applications
+
+## Market Impact and Adoption
+Organizations worldwide are embracing ${slug.replace(/-/g, ' ')} to:
+- Accelerate digital transformation initiatives
+- Improve operational efficiency and reduce costs
+- Enhance customer experience and engagement
+- Stay competitive in rapidly evolving markets
+
+## Future Outlook
+Looking ahead to late 2025 and beyond, we anticipate:
+- Continued integration with emerging technologies
+- Greater accessibility for businesses of all sizes
+- Enhanced automation and intelligent features
+- Stronger focus on sustainability and ethical development
 
 ## Conclusion
-At Nested, we focus on delivering cutting-edge solutions that meet these modern requirements.`,
-      author: 'Nested Team',
+At Nested, we're committed to helping organizations navigate this technological evolution and leverage ${slug.replace(/-/g, ' ')} for sustainable growth and success.`,
+      author: Math.random() > 0.5 ? 'Abduallh' : 'Baraa',
       date: 'September 7, 2025',
       imageTopic: 'tech innovation'
     });
@@ -137,7 +152,17 @@ At Nested, we focus on delivering cutting-edge solutions that meet these modern 
           <h1 className="text-4xl md:text-5xl font-bold text-black mb-4">{title}</h1>
           <div className="flex items-center gap-4 text-gray-600">
             <div className="flex items-center gap-2">
-              <Avatar className="w-10 h-10">
+              <Avatar className="w-12 h-12">
+                {article.authorImage ? (
+                  <img 
+                    src={article.authorImage}
+                    alt={author}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : null}
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold text-sm">
                   {author === 'Abduallh' ? 'AB' : author === 'Baraa' ? 'BR' : author === 'Nested Team' ? 'NT' : 'AI'}
                 </AvatarFallback>
@@ -175,7 +200,9 @@ export default function ArticlePage() {
           <ArticlePageContent />
         </div>
       </main>
-      <Footer />
+      <div className="bg-black text-white">
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -17,7 +17,8 @@ const InsightArticleSchema = z.object({
     content: z.string().describe("The full content of the article in Markdown format. Should be between 3 to 5 paragraphs long."),
     author: z.string().describe("The name of the author of the article. It should be either 'Abduallh' or 'Baraa'."),
     date: z.string().describe("The publication date of the article, in 'Month Day, Year' format (e.g., 'July 15, 2024')."),
-    imageTopic: z.string().describe("A one or two-word topic for a relevant background image (e.g., 'mobile app', 'web design', 'app interface').")
+    imageTopic: z.string().describe("A one or two-word topic for a relevant background image (e.g., 'mobile app', 'web design', 'app interface')."),
+    authorImage: z.string().optional().describe("Optional URL for the author's profile image.")
 });
 export type InsightArticle = z.infer<typeof InsightArticleSchema>;
 
