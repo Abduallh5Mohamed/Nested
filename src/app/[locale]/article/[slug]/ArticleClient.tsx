@@ -18,10 +18,10 @@ function ArticlePageContent() {
   const t = useTranslations('Insights');
   const [article, setArticle] = useState<InsightArticle | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchArticle = async (slugStr: string) => {
-      // Try sessionStorage first
       let found = false;
       if (typeof window !== 'undefined') {
         try {
@@ -31,10 +31,10 @@ function ArticlePageContent() {
             found = true;
           }
         } catch (error) {
+          setError('تعذر جلب المقال من التخزين المحلي');
           console.error('Could not retrieve article from session storage', error);
         }
       }
-      // If not found, fetch from Gemini API
       if (!found) {
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAYUegFJOJwTYMxZMTzYs6fBX2JzMgoH0g`, {
@@ -47,7 +47,6 @@ function ArticlePageContent() {
             })
           });
           const data = await res.json();
-          // Gemini returns content in a nested structure, extract JSON from text
           let articleJson = null;
           if (data && data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
             try {
@@ -57,10 +56,14 @@ function ArticlePageContent() {
                 window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(articleJson));
               }
             } catch (e) {
+              setError('المقال المسترجع من Gemini غير صالح أو غير قابل للعرض');
               console.error('Failed to parse Gemini API response', e);
             }
+          } else {
+            setError('لم يتم العثور على مقال مناسب من Gemini API');
           }
         } catch (error) {
+          setError('تعذر الاتصال بخدمة Gemini API');
           console.error('Failed to fetch article from Gemini API', error);
         }
       }
@@ -90,6 +93,17 @@ function ArticlePageContent() {
   }
 
   const tInsights = useTranslations('Insights');
+  if (error) {
+    return (
+      <div className="text-center py-24">
+        <p className="text-red-600 font-bold mb-4">{error}</p>
+        <p className="text-gray-600 mb-4">حدث خطأ أثناء جلب أو عرض المقال. يرجى المحاولة لاحقًا.</p>
+        <Link href="/" passHref>
+          <Button>{tInsights('goHome')}</Button>
+        </Link>
+      </div>
+    );
+  }
   if (!article) {
     return (
       <div className="text-center py-24">
