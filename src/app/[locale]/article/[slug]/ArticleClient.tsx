@@ -19,6 +19,12 @@ function ArticlePageContent() {
   const [article, setArticle] = useState<InsightArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before accessing browser APIs
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fallback article for cases where API fails
   const createFallbackArticle = (slug: string): InsightArticle => ({
@@ -45,60 +51,92 @@ At Nested, we focus on delivering cutting-edge solutions that meet these modern 
   });
 
   useEffect(() => {
+    if (!mounted) return;
+    
     const controller = new AbortController();
     const fetchArticle = async (slugStr: string) => {
-      let found = false;
-      if (typeof window !== 'undefined') {
-        try {
-          const storedArticle = window.sessionStorage.getItem(`article-${slugStr}`);
-          if (storedArticle) {
-            setArticle(JSON.parse(storedArticle));
-            found = true;
+      try {
+        let found = false;
+        if (typeof window !== 'undefined') {
+          try {
+            const storedArticle = window.sessionStorage.getItem(`article-${slugStr}`);
+            if (storedArticle) {
+              const parsed = JSON.parse(storedArticle);
+              setArticle(parsed);
+              found = true;
+            }
+          } catch (sessionError) {
+            console.warn('SessionStorage error:', sessionError);
+            // Continue to fallback
           }
-        } catch (error) {
-          setError('تعذر جلب المقال من التخزين المحلي');
         }
-      }
-      if (!found) {
-        try {
-          const res = await fetch(`/api/articles/${slugStr}`, { signal: controller.signal });
-          if (!res.ok) {
-            const errJson = await res.json().catch(() => ({}));
-            setError(errJson.error || 'خطأ في جلب المقال');
-          } else {
-            const data = await res.json();
-            if (data?.article) {
-              setArticle(data.article);
-              if (typeof window !== 'undefined') {
-                window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(data.article));
-              }
+        
+        if (!found) {
+          try {
+            const res = await fetch(`/api/articles/${slugStr}`, { signal: controller.signal });
+            if (!res.ok) {
+              throw new Error(`API returned ${res.status}`);
             } else {
-              setError('استجابة غير متوقعة من الخادم');
+              const data = await res.json();
+              if (data?.article) {
+                setArticle(data.article);
+                if (typeof window !== 'undefined') {
+                  try {
+                    window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(data.article));
+                  } catch (storageError) {
+                    console.warn('Storage error:', storageError);
+                  }
+                }
+              } else {
+                throw new Error('Invalid API response');
+              }
             }
-          }
-        } catch (error: any) {
-          if (error.name !== 'AbortError') {
-            console.warn('API failed, using fallback article:', error);
-            // Use fallback article instead of showing error
-            const fallbackArticle = createFallbackArticle(slugStr);
-            setArticle(fallbackArticle);
-            if (typeof window !== 'undefined') {
-              window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(fallbackArticle));
+          } catch (apiError: any) {
+            if (apiError.name !== 'AbortError') {
+              console.warn('API failed, using fallback article:', apiError);
+              // Use fallback article instead of showing error
+              const fallbackArticle = createFallbackArticle(slugStr);
+              setArticle(fallbackArticle);
+              if (typeof window !== 'undefined') {
+                try {
+                  window.sessionStorage.setItem(`article-${slugStr}`, JSON.stringify(fallbackArticle));
+                } catch (storageError) {
+                  console.warn('Storage error:', storageError);
+                }
+              }
             }
           }
         }
+      } catch (generalError) {
+        console.error('General error in fetchArticle:', generalError);
+        // Always provide fallback
+        const fallbackArticle = createFallbackArticle(slugStr);
+        setArticle(fallbackArticle);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-    const slug = params.slug;
+
+    const slug = params?.slug;
     if (slug) {
-      const slugStr = Array.isArray(slug) ? slug[0] : slug;
-      fetchArticle(slugStr);
+      const slugStr = Array.isArray(slug) ? slug[0] : String(slug);
+      if (slugStr) {
+        fetchArticle(slugStr);
+      } else {
+        setLoading(false);
+      }
     } else {
       setLoading(false);
     }
-    return () => controller.abort();
-  }, [params.slug]);
+    
+    return () => {
+      try {
+        controller.abort();
+      } catch (abortError) {
+        console.warn('Abort error:', abortError);
+      }
+    };
+  }, [params?.slug, mounted]);
 
   if (loading) {
     return (
@@ -172,12 +210,45 @@ At Nested, we focus on delivering cutting-edge solutions that meet these modern 
 }
 
 export default function ArticlePage() {
+  // Add error boundary-like behavior
+  const [hasError, setHasError] = useState(false);
+  
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error);
+      setHasError(true);
+    };
+    
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className="flex flex-col min-h-screen bg-background">
+        <Header videoEnded={true} />
+        <main className="flex-1 pt-20 bg-[hsl(var(--off-white-background))] text-[hsl(var(--dark-text))]">
+          <div className="container mx-auto px-4 md:px-6 py-12 md:py-24">
+            <div className="text-center py-24">
+              <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+              <p className="text-gray-600 mb-4">Please try refreshing the page.</p>
+              <Link href="/" className="text-blue-600 hover:text-blue-500">
+                Go back to home
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <Header videoEnded={true} />
       <main className="flex-1 pt-20 bg-[hsl(var(--off-white-background))] text-[hsl(var(--dark-text))]">
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-24">
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense fallback={<div className="text-center py-12">Loading article...</div>}>
             <ArticlePageContent />
           </Suspense>
         </div>
